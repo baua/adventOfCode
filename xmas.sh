@@ -144,6 +144,8 @@ function day3() {
 }
 
 function day3a() {
+    # TODO: current code produces one to much for part 1 and two too much 
+    #       for part 2
     in=$(cat ${xcode}/day3.txt)
     local num=1
     [ $1 -eq 2 ] && num=2
@@ -204,15 +206,35 @@ function day3a() {
     # 2631
 }
 
+function day4(){
+    local puzzle=bgvyzdsv
+    local count=0
+    local result=''
+    local start='00000'
+    local count=0
+    if [ "$1" = "2" ]; then
+        start='000000'
+    fi
+    [ "$2" != "" ] && count=$2
+
+    while [ "${result:0:${#start}}" != "${start}" ]; do
+        result=$(echo -n ${puzzle}${count}|md5sum)
+        count=$(( count+=1 ))
+        [ $(( count % 10000 )) -eq 0 ] && echo $count
+    done
+    echo $(( count - 1 ))
+    # 254575
+    # 1038736
+}
 
 case ${day} in
     0|1|2)
         day${day}
         ;;
-    3|3a)
+    3|3a|4)
         part=1
         [ "$2" == '2' ] && part=2
-        day${day} ${part}
+        day${day} ${part} $3
         ;;
     *)
         echo "Still waiting for day ${day}"
