@@ -2,6 +2,19 @@
 day=$1
 xcode=~/tmp/adventOfCode
 
+
+# $1 - list
+# $2 - item
+function listContains() {
+    len=${#@}
+    list=${@:1:$((len-1))}
+    elem=${@:${len}:1}
+    for item in ${list[@]}; do
+        [ "${item}" = "${elem}" ] && return 0
+    done
+    return 1
+}
+
 function day0() {
     local pin=${xcode}/day1.in
     echo $(($(grep -o '(' $pin| wc -l)-$(grep -o ')' $pin | wc -l)))
@@ -11,7 +24,7 @@ function day1() {
     local pin=${xcode}/day1.in
     p=$(cat $pin)
     floor=0
-    for i in `seq 0 $((${#p}-1))`; do 
+    for i in `seq 0 $((${#p}-1))`; do
         c=${p:$i:1}
         case ${c} in
             '(')
@@ -144,7 +157,7 @@ function day3() {
 }
 
 function day3a() {
-    # TODO: current code produces one to much for part 1 and two too much 
+    # TODO: current code produces one to much for part 1 and two too much
     #       for part 2
     in=$(cat ${xcode}/day3.txt)
     local num=1
@@ -227,14 +240,138 @@ function day4(){
     # 1038736
 }
 
+function day5part1() {
+    local in=${xcode}/day5.txt
+    local -a vowels=( a e i u o )
+    local hasDouble=0
+    local vowelCount=0
+    local niceStrings=0
+    local lastChar=''
+    local -a naughty=( ab cd pq xy)
+    for word in $(cat ${in}); do
+        hasDouble=0
+        vowelCount=0
+        lastChar=''
+        for p in $(seq 0 $(( ${#word} - 1 ))); do
+            c=${word:${p}:1}
+            $(listContains "${vowels[@]}" ${c}) && vowelCount=$(( vowelCount += 1 ))
+            [ "${lastChar}" = "${c}" ] && hasDouble=1
+            lastChar=${c}
+        done
+        if [[ "${word}" =~ .*(ab|cd|pq|xy).* ]]; then
+            continue
+        fi
+        [ ${vowelCount} -ge 3 -a ${hasDouble} -ge 1 ] && niceStrings=$(( niceStrings += 1))
+    done
+    echo "Number of nice strings = ${niceStrings}"
+    # 255
+}
+
+function day5part2(){
+    local in=${xcode}/day5.txt
+    local niceStrings=0
+    local doublePair=0
+    local repeatedLetter=0
+    for word in $(cat ${in}); do
+        doublePair=0
+        repeatedLetter=0
+        for pos in $(seq 0 $(( ${#word} - 1 ))); do
+            pair=${word:${pos}:2}
+            rest=${word:$(( ${pos}+2 )):$(( ${#word}-pos ))}
+            if [[ "${rest}" =~ .*${pair}.* ]]; then
+                doublePair=$(( doublePair+=1 ))
+            fi
+            c=${word:${pos}:1}
+            ccc=${word:$(( ${pos}+2 )):1}
+            if [[ ${c} == ${ccc} ]]; then
+                repeatedLetter=$(( repeatedLetter+=1 ))
+            fi
+        done
+        if [ ${doublePair} -ge 1 -a ${repeatedLetter} -ge 1 ]; then
+            niceStrings=$(( niceStrings+=1 ))
+        fi
+    done
+    echo "Number of nice strings = ${niceStrings}"
+    # 55
+}
+
+# $1 - set to (0|1|t) t=toggle
+function setSection() {
+    local setTo=$1
+    local x0=$2
+    local y0=$3
+    local x1=$4
+    local y1=$5
+
+    for x in $(seq ${x0} ${x1}); do
+        for y in $(seq ${y0} ${y1}); do
+            if [ "${setTo}" = "t" ]; then
+                [ ${matrix[${x},${y}]} -eq 0 ] && matrix[${x},${y}]=1 || matrix[${x},${y}]=0
+            else
+                matrix[${x},${y}]=${setTo}
+            fi
+        done
+    done
+    return ${matrix}
+}
+
+function countLights() {
+    echo "Counting ..."
+    local -i dim=$1
+    local -i count=0
+
+    for x in $(seq 0 ${dim}); do
+        for y in $(seq 0 ${dim}); do
+            [ ${matrix[${x},${y}]} -eq 1 ] && count=$(( count+=1 ))
+        done
+    done
+    echo ${count}
+}
+
+function day6() {
+    local in=${xcode}/day6.txt
+    local niceStrings=0
+    dim=999
+    declare -A matrix
+    echo "Initialise"
+    setSection 1 0 0 ${dim} ${dim}
+
+    while read line; do
+        echo ${line}
+        case ${line} in
+            turn\ on\ *)
+                    read a b edge1 c edge2 <<<${line}
+                    setSection 1 ${edge1%%,*} ${edge1##*,} ${edge2%%,*} ${edge2##*,}
+                ;;
+            turn\ off\ *)
+                    read a b edge1 c edge2 <<<${line}
+                    setSection 0 ${edge1%%,*} ${edge1##*,} ${edge2%%,*} ${edge2##*,}
+                ;;
+            toggle\ *)
+                    read a edge1 b edge2 <<<${line}
+                    setSection t ${edge1%%,*} ${edge1##*,} ${edge2%%,*} ${edge2##*,}
+                ;;
+            *)
+                echo "This is an undefine command."
+                exit -1
+                ;;
+        esac
+    done <${in}
+    echo $(countLights ${dim})
+}
+
 case ${day} in
-    0|1|2)
+    0|1|2|6)
         day${day}
         ;;
     3|3a|4)
         part=1
         [ "$2" == '2' ] && part=2
         day${day} ${part} $3
+        ;;
+    5)
+        part=1
+        [ "$2" == '2' ] && day5part2 || day5part1
         ;;
     *)
         echo "Still waiting for day ${day}"
