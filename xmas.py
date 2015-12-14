@@ -1,8 +1,9 @@
 #!/bin/python
 
-import sys
+import os
 import pprint
 import re
+import sys
 
 def readFile(filename):
     f = open(filename,'r')
@@ -99,26 +100,34 @@ def day6(infile,part):
     # 377891
     # 14110788
 
-def day7_isGate(str):
-    if re.search('.*(NOT|AND|OR|LSHIFT|RSHIFT).*',str):
-        return True
-    else:
-        return False
-
-def day7_isWire(str,circuit):
-    if str in circuit:
-        return True
-    else:
-        return False
-
 def day7_isSignal(str):
     if int(str):
         return True
     else:
         return False
 
-def day7_resolveGate(gate):
-    pass
+def day7_resolveSeq(seq):
+    last=seq[-1]
+    if day7_isSignal(last):
+        return last
+    else:
+        for ex in last['in']:
+            if not day7_isSignal(ex):
+                ex = day7_resolveSeq(ex)
+        op=last['op']
+        if op=='not':
+            return ~last['in'][0]
+        elif op=='and':
+            return last['in'][0] & last['in'][1]
+        elif op=='or':
+            return last['in'][0] | last['in'][1]
+        elif op=='rshift':
+            return last['in'][0] >> last['shift']
+        elif op=='lshift':
+            return last['in'][0] << last['shift']
+        else:
+            print("wrong op.")
+            sys.exit(1)
 
 def day7(infile,part):
     string = readFile(infile).rstrip()
@@ -149,26 +158,29 @@ def day7(infile,part):
             circuit[o]['in'] = [ vals[0] ]
             circuit[o]['shift'] = vals[1]
         else:
-            circuit[o]['in'] = [ vals[0] ]
+            circuit[o]['in'] =  [i]
             circuit[o]['op'] = 'sig'
-
-    pprint.pprint(circuit)
-    sys.exit(1)
 
 
     # follow output
-    seq = [ 'a' ]
+    seq = [ {'op': 'sig','in' : ['a']} ]
+    res = day7_resolveSeq(seq)
+    sys.exit(1)
     while not (isinstance(seq[0],int) and len(seq) == 1):
         resolve = seq[-1]
+        pprint.pprint(seq)
+        print("resolve = %s" % resolve)
 
-        if day7_isWire(resolve,circuit):
-            seq[-1] = circuit[resolve]
+        # is signal or wire
+        if resolve['op'] in ['sig', 'wire']:
+            seq[-1] = circuit[resolve['in']]
         elif day7_isGate(resolve):
             seq[-1] = day7_resolveGate(resolve)
-        pprint.pprint(seq)
+        else:
+            print("we forgot something")
 
 
-workdir="/home/mlehmann/tmp/adventOfCode/"
+workdir="%s/tmp/adventOfCode/" % os.path.expanduser('~')
 day=int(sys.argv[1])
 if (len(sys.argv) > 2):
     part=sys.argv[2]
