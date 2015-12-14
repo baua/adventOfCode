@@ -117,6 +117,9 @@ def day7_isSignal(str):
     else:
         return False
 
+def day7_resolveGate(gate):
+    pass
+
 def day7(infile,part):
     string = readFile(infile).rstrip()
     gates = string.split('\n')
@@ -125,7 +128,33 @@ def day7(infile,part):
     # build circuit
     for gate in gates:
         (i,o) = gate.split(' -> ')
-        circuit[o] = i
+        circuit[o] = {}
+        if 'NOT' in i:
+            circuit[o]['op'] = 'not'
+            circuit[o]['in'] = i.split('NOT ')[1]
+        elif 'AND' in i:
+            circuit[o]['op'] = 'and'
+            circuit[o]['in'] = i.split(' AND ')
+        elif 'OR' in i:
+            circuit[o]['op'] = 'or'
+            circuit[o]['in'] = i.split(' OR ')
+        elif 'LSHIFT' in i:
+            circuit[o]['op'] = 'lshift'
+            vals = i.split(' LSHIFT ')
+            circuit[o]['in'] = [ vals[0] ]
+            circuit[o]['shift'] = vals[1]
+        elif 'RSHIFT' in i:
+            circuit[o]['op'] = 'rshift'
+            vals = i.split(' RSHIFT ')
+            circuit[o]['in'] = [ vals[0] ]
+            circuit[o]['shift'] = vals[1]
+        else:
+            circuit[o]['in'] = [ vals[0] ]
+            circuit[o]['op'] = 'sig'
+
+    pprint.pprint(circuit)
+    sys.exit(1)
+
 
     # follow output
     seq = [ 'a' ]
@@ -135,8 +164,8 @@ def day7(infile,part):
         if day7_isWire(resolve,circuit):
             seq[-1] = circuit[resolve]
         elif day7_isGate(resolve):
-
-
+            seq[-1] = day7_resolveGate(resolve)
+        pprint.pprint(seq)
 
 
 workdir="/home/mlehmann/tmp/adventOfCode/"
