@@ -328,9 +328,38 @@ function countLights() {
     echo ${count}
 }
 
+function setSectionb() {
+    local setTo=$1
+    local x0=$2
+    local y0=$3
+    local x1=$4
+    local y1=$5
+
+    for x in $(seq ${x0} ${x1}); do
+        for y in $(seq ${y0} ${y1}); do
+            if [ "${setTo}" = "t" ]; then
+                [ ${matrix[${x},${y}]} -eq 0 ] && matrix[${x},${y}]=1 || matrix[${x},${y}]=0
+            else
+                matrix[${x},${y}]=${setTo}
+            fi
+        done
+    done
+    return ${matrix}
+}
+
+
+function day6b() {
+    local in=${xcode}/day6.txt
+    dim=999
+    declare -A matrix
+ 
+    while read line; do
+        echo $line
+    done <<$(tac ${in})
+}
+
 function day6() {
     local in=${xcode}/day6.txt
-    local niceStrings=0
     dim=999
     declare -A matrix
     echo "Initialise"
@@ -361,7 +390,7 @@ function day6() {
 }
 
 case ${day} in
-    0|1|2|6)
+    0|1|2|6|6b)
         day${day}
         ;;
     3|3a|4)
