@@ -100,31 +100,33 @@ def day6(infile,part):
     # 377891
     # 14110788
 
-def day7_isSignal(str):
-    if int(str):
-        return True
+def day7_resolveSeq(seq,circuit):
+    if isinstance(seq, int):
+        return seq
+    elif seq['op'] == 'sig':
+        return int(seq['in'])
     else:
-        return False
+        for pos in range(len(seq['in'])):
+            if  (type(seq['in'][pos]).__name__ == 'str' and seq['in'][pos].isdigit()):
+                seq['in'][pos] = int(seq['in'][pos])
+            elif type(seq['in'][pos]).__name__ == 'int':
+                pass
+            else:
+                seq['in'][pos] = day7_resolveSeq(circuit[seq['in'][pos]],circuit)
 
-def day7_resolveSeq(seq):
-    last=seq[-1]
-    if day7_isSignal(last):
-        return last
-    else:
-        for ex in last['in']:
-            if not day7_isSignal(ex):
-                ex = day7_resolveSeq(ex)
-        op=last['op']
+        op=seq['op']
         if op=='not':
-            return ~last['in'][0]
+            return ~seq['in'][0]
         elif op=='and':
-            return last['in'][0] & last['in'][1]
+            return seq['in'][0] & seq['in'][1]
         elif op=='or':
-            return last['in'][0] | last['in'][1]
+            return seq['in'][0] | seq['in'][1]
         elif op=='rshift':
-            return last['in'][0] >> last['shift']
+            return seq['in'][0] >> seq['shift']
         elif op=='lshift':
-            return last['in'][0] << last['shift']
+            return seq['in'][0] << seq['shift']
+        elif op=='wire':
+            return day7_resolveSeq(seq['in'][0],circuit)
         else:
             print("wrong op.")
             sys.exit(1)
@@ -134,13 +136,16 @@ def day7(infile,part):
     gates = string.split('\n')
     circuit = {}
 
+    if part == 2:
+        gates += [ '956 -> b' ]
+
     # build circuit
     for gate in gates:
         (i,o) = gate.split(' -> ')
         circuit[o] = {}
         if 'NOT' in i:
             circuit[o]['op'] = 'not'
-            circuit[o]['in'] = i.split('NOT ')[1]
+            circuit[o]['in'] = [ i.split('NOT ')[1] ]
         elif 'AND' in i:
             circuit[o]['op'] = 'and'
             circuit[o]['in'] = i.split(' AND ')
@@ -151,35 +156,49 @@ def day7(infile,part):
             circuit[o]['op'] = 'lshift'
             vals = i.split(' LSHIFT ')
             circuit[o]['in'] = [ vals[0] ]
-            circuit[o]['shift'] = vals[1]
+            circuit[o]['shift'] = int(vals[1])
         elif 'RSHIFT' in i:
             circuit[o]['op'] = 'rshift'
             vals = i.split(' RSHIFT ')
             circuit[o]['in'] = [ vals[0] ]
-            circuit[o]['shift'] = vals[1]
+            circuit[o]['shift'] = int(vals[1])
+        elif i.isdigit():
+            circuit[o]['in'] =  i
+            circuit[o]['op'] = 'sig'
         else:
             circuit[o]['in'] =  [i]
-            circuit[o]['op'] = 'sig'
-
+            circuit[o]['op'] = 'wire'
 
     # follow output
-    seq = [ {'op': 'sig','in' : ['a']} ]
-    res = day7_resolveSeq(seq)
-    sys.exit(1)
-    while not (isinstance(seq[0],int) and len(seq) == 1):
-        resolve = seq[-1]
-        pprint.pprint(seq)
-        print("resolve = %s" % resolve)
+    seq = {'op': 'wire','in' : ['a']}
+    seq = {'op': 'wire','in' : ['a']}
+    res = day7_resolveSeq(seq,circuit)
 
-        # is signal or wire
-        if resolve['op'] in ['sig', 'wire']:
-            seq[-1] = circuit[resolve['in']]
-        elif day7_isGate(resolve):
-            seq[-1] = day7_resolveGate(resolve)
-        else:
-            print("we forgot something")
+    print("They result is %s" % res)
+    # 956
+    # 40149
 
+def day8_getRealString(string):
+    string = re.sub(r'([^\\])\\x(..)',r'\1T',string)
+    string=string[1:-1].replace('\\"','"').replace('\\\\','\\')
+    return string
 
+def day8(infile,part):
+    content = readFile(infile).rstrip()
+    strings = content.split('\n')
+    #strings = [ r'""',r'"abc"',r'"aaa\"aaa"',r'"\x27"' ]
+    strCode=0
+    memCount=0
+    for string in strings:
+        memStr=day8_getRealString(string)
+        strCode += len(string)
+        memCount += len(memStr)
+        print("%s (%s) -> %s (%s)" % (string,len(string),memStr,len(memStr)))
+        print("(%s) -> (%s)" % (len(string),len(memStr)))
+
+    print(strCode)
+    print(memCount)
+    print(strCode-memCount)
 workdir="%s/tmp/adventOfCode/" % os.path.expanduser('~')
 day=int(sys.argv[1])
 if (len(sys.argv) > 2):
@@ -194,4 +213,7 @@ elif day == 6:
     day6(infile,int(part))
 elif day == 7:
     day7(infile,int(part))
+elif day == 8:
+    day8(infile,int(part))
+
 

@@ -352,10 +352,10 @@ function day6b() {
     local in=${xcode}/day6.txt
     dim=999
     declare -A matrix
- 
+
     while read line; do
         echo $line
-    done <<$(tac ${in})
+    done <<<$(tac ${in})
 }
 
 function day6() {
@@ -389,8 +389,33 @@ function day6() {
     echo $(countLights ${dim})
 }
 
+function day8() {
+    local in=${xcode}/day8.txt
+    local -i memCount=0
+    local -i strCount=0
+
+    while read line; do
+        echo "$line"
+        new=$(sed -e "s/\x??/T/g" <<<${line})
+        #echo $new
+        #echo $'line'
+        memCount=$(( memCount += ${#line} ))
+        # remove quotes
+        str=${line:1:$((${#line}-2))}
+
+        #remove Hex values
+        str=${str//\\x??/T}
+        strCount=$(( strCount += ${#str} ))
+        #echo "${line} (${#line}) ${str} (${#str})"
+    done <${in}
+
+    echo ${memCount}
+    echo ${strCount}
+    echo $(( memCount - strCount ))
+}
+
 case ${day} in
-    0|1|2|6|6b)
+    0|1|2|6|6b|8)
         day${day}
         ;;
     3|3a|4)
