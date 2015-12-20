@@ -413,11 +413,39 @@ function day8() {
     fi
 }
 
+function day9_getDistance(){
+    echo "hier"
+    echo $@
+    local -a args=$@
+    local total=${1}
+    if [ $# -eq 1 ]; then
+        echo $1
+    else
+        echo ${args:2}
+        #for city in ${args:2}: 
+        #    echo $ 
+    fi
+}
+
+function day9(){
+    local in=${xcode}/day9.txt
+    local -A cities
+    local -A dists
+
+    while read c to c2 eq distance; do
+        cities[${c}]=0
+        dists[${c}To${c2}]=${distance}
+    done <${in}
+    day9_getDistance 0 ${!cities[@]}
+    echo ${!cities[@]}
+    echo ${!dists[@]}
+}
+
 case ${day} in
     0|1|2|6|6b)
         day${day}
         ;;
-    3|3a|4|8)
+    3|3a|4|8|9)
         part=1
         [ "$2" == '2' ] && part=2
         day${day} ${part} $3
