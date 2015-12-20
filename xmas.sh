@@ -152,8 +152,6 @@ function day3() {
     done
 
     echo ${#m[@]}
-    # 2572
-    # 2631
 }
 
 function day3a() {
@@ -215,8 +213,6 @@ function day3a() {
     echo y= $y1
 
     echo ${#m[@]}
-    # 2572
-    # 2631
 }
 
 function day4(){
@@ -236,8 +232,6 @@ function day4(){
         [ $(( count % 10000 )) -eq 0 ] && echo $count
     done
     echo $(( count - 1 ))
-    # 254575
-    # 1038736
 }
 
 function day5part1() {
@@ -264,7 +258,6 @@ function day5part1() {
         [ ${vowelCount} -ge 3 -a ${hasDouble} -ge 1 ] && niceStrings=$(( niceStrings += 1))
     done
     echo "Number of nice strings = ${niceStrings}"
-    # 255
 }
 
 function day5part2(){
@@ -292,7 +285,6 @@ function day5part2(){
         fi
     done
     echo "Number of nice strings = ${niceStrings}"
-    # 55
 }
 
 # $1 - set to (0|1|t) t=toggle
@@ -395,24 +387,37 @@ function day8() {
     local -i strCount=0
     file=$(cat ${in})
 
-    # TODO:
-    # is there a way without using sed?
-    for line in ${file}; do
-        memCount=$(( memCount += ${#line} ))
-        str=${line:1:$((${#line}-2))}
-        str=$(sed -e 's/\(\\"\|\\\\\|\\x..\)/X/g' <<<${str})
-        strCount=$(( strCount += ${#str} ))
-    done
 
-    echo $(( memCount - strCount ))
-    # 1371
+    if [ ${part} -eq 1 ]; then
+        # TODO:
+        # is there a way without using sed?
+        for line in ${file}; do
+            memCount=$(( memCount += ${#line} ))
+            str=${line:1:$((${#line}-2))}
+            str=$(sed -e 's/\(\\"\|\\\\\|\\x..\)/X/g' <<<${str})
+            strCount=$(( strCount += ${#str} ))
+        done
+
+        echo $(( memCount - strCount ))
+    else
+        for line in ${file}; do
+            echo "0: $line"
+            strCount=$(( strCount += ${#line} ))
+            str=${line//\\/\\\\}
+            str2=${str//\"/\\\"}
+            final="\"${str2}\""
+            memCount=$(( memCount += ${#final} ))
+        done
+
+        echo $(( memCount - strCount ))
+    fi
 }
 
 case ${day} in
-    0|1|2|6|6b|8)
+    0|1|2|6|6b)
         day${day}
         ;;
-    3|3a|4)
+    3|3a|4|8)
         part=1
         [ "$2" == '2' ] && part=2
         day${day} ${part} $3
