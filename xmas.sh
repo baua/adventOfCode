@@ -1,6 +1,6 @@
 #!/bin/bash
 day=$1
-xcode=~/tmp/adventOfCode
+xcode=~/study/adventOfCode
 
 
 # $1 - list
@@ -393,25 +393,19 @@ function day8() {
     local in=${xcode}/day8.txt
     local -i memCount=0
     local -i strCount=0
+    file=$(cat ${in})
 
-    while read line; do
-        echo "$line"
-        new=$(sed -e "s/\x??/T/g" <<<${line})
-        #echo $new
-        #echo $'line'
+    # TODO:
+    # is there a way without using sed?
+    for line in ${file}; do
         memCount=$(( memCount += ${#line} ))
-        # remove quotes
         str=${line:1:$((${#line}-2))}
-
-        #remove Hex values
-        str=${str//\\x??/T}
+        str=$(sed -e 's/\(\\"\|\\\\\|\\x..\)/X/g' <<<${str})
         strCount=$(( strCount += ${#str} ))
-        #echo "${line} (${#line}) ${str} (${#str})"
-    done <${in}
+    done
 
-    echo ${memCount}
-    echo ${strCount}
     echo $(( memCount - strCount ))
+    # 1371
 }
 
 case ${day} in
