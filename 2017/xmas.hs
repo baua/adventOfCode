@@ -8,8 +8,11 @@ days = [ day1Main ]
 
 day1Main = do
     c <- readFile $ inputDir </> "day1.txt"
-    -- print $ day1part1 c
-    print $ day1part2 c
+    print $ "part1=" ++ show (day1part1 c)
+    print $ "part2=" ++ show (day1part2 c)
+
+-- DAY2 Start
+-- DAY2 End
 
 -- DAY1 Start
 listNumbers = map (read :: String -> Int)
