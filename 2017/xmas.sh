@@ -8,6 +8,183 @@ if [ $# -ne 1 ]; then
 fi
 day=$1
 
+function abs(){
+	local -i number=$1
+	if (( number < 0 )); then
+		echo $(( number * -1 ))
+	else
+        #shellcheck disable=SC2086
+		echo ${number}
+	fi
+}
+
+function day4() {
+    local data; 
+    data=$(cat <<!
+aa bb cc dd ee
+aa bb cc dd aa
+aa bb cc dd aaa
+aa
+!
+)
+    data="$(cat ${inputDir}/day4.txt)"
+    local -a row
+    local -A dummy=()
+    local -A dummy2=()
+    local -i duplicates=0
+    local -i anagrams=0
+    local -i validPasswords=0
+    local -i validPasswords2=0
+    local hash
+    local -i partOneDone=0
+
+    while read -ra row; do
+        let partOneDone=0
+        let duplicates=0
+        let duplicates2=0
+        dummy=()
+        dummy2=()
+        for i in "${row[@]}"; do
+            # part1
+            if [[ "${dummy[$i]:-NilOrNotSet}" != "NilOrNotSet" ]] && (( partOneDone == 0 )); then
+                (( duplicates ++ ))
+                partOneDone=1
+            else
+                dummy[$i]=1
+            fi
+
+            #part2
+            hash="$(echo "$i" | fold -w1 |sort | xargs)"
+            hash=${hash// /_}
+            if [ "${dummy2[${hash}]:-NilOrNotSet}" != "NilOrNotSet" ]; then
+                (( duplicates2 ++ ))
+                break
+            else
+                dummy2[${hash}]=1
+            fi
+        done
+        if (( duplicates == 0 )) && (( partOneDone ==0 )); then
+            ((validPasswords++))
+        fi
+        if (( duplicates2 == 0 )); then
+            ((validPasswords2++))
+        fi
+    done <<<"${data}"
+    echo "part1 valid passwords = $validPasswords"
+    echo "part2 valid passwords = $validPasswords2"
+}
+
+function day3() {
+#shellcheck disable=SC2034
+	mem=$(cat <<!
+17  16  15  14  13
+18   5   4   3  12
+19   6   1   2  11
+20   7   8   9  10
+21  22  23
+!
+)
+
+#1  R
+#2  RU
+#3  RUL
+#4  RULL
+#5  RULLL
+#6  RULLLD
+#7  RULLLDD
+#8  RULLLDDDR
+#9  RULLLDDDRR
+#10 RULLLDDDRR
+#11 RULLLDDDRRRU
+#12 RULLLDDDRRRUU
+#13 RULLLDDDRRRUU
+#RULLLDDD
+	# R = x+1
+	# U = y+1
+	# L = x-1
+	# D = y-1
+	# R U L D
+	local direction="R"
+	local -i maxX=0
+	local -i minX=0
+	local -i maxY=0
+	local -i minY=0
+
+	local -i number=13
+	local -i number=133
+	local -i number=289326
+	local -i marker=1
+	local -i marker2=1
+
+	local -i part2Done=0
+
+	local -i x=0
+	local -i y=0
+	local -A grid=()
+	grid['0,0']=1
+	local -i calcNumber=0
+
+	while (( marker < number )); do
+		calcNumber=0
+		#echo "part1 - $marker  - ($x,$y) ($maxX,$maxY) $direction"
+		case "${direction}" in
+			R)
+				(( x+=1 ))
+				if (( x > maxX)); then
+					(( maxX++ ))
+					direction="U"
+				fi
+			;;
+			L)
+				(( x-=1 ))
+				if (( x < minX)); then
+					(( minX-- ))
+					direction="D"
+				fi
+			;;
+			U)
+				(( y+=1 ))
+				if (( y > maxY)); then
+					(( maxY++ ))
+					direction="L"
+				fi
+			;;
+			D)
+				(( y-=1 ))
+				if (( y < minY)); then
+					(( minY-- ))
+					direction="R"
+				fi
+			;;
+		esac
+
+		# part two value calculation is a bit harder
+		if (( part2Done == 0 )); then
+			[ ${grid["$((x+0)),$((y+1))"]:-NilOrNotSet} != "NilOrNotSet" ] && (( calcNumber+=${grid["$((x+0)),$((y+1))"]} ))
+			[ ${grid["$((x+1)),$((y+1))"]:-NilOrNotSet} != "NilOrNotSet" ] && (( calcNumber+=${grid["$((x+1)),$((y+1))"]} ))
+			[ ${grid["$((x+1)),$((y+0))"]:-NilOrNotSet} != "NilOrNotSet" ] && (( calcNumber+=${grid["$((x+1)),$((y+0))"]} ))
+			[ ${grid["$((x+1)),$((y-1))"]:-NilOrNotSet} != "NilOrNotSet" ] && (( calcNumber+=${grid["$((x+1)),$((y-1))"]} ))
+			[ ${grid["$((x+0)),$((y-1))"]:-NilOrNotSet} != "NilOrNotSet" ] && (( calcNumber+=${grid["$((x+0)),$((y-1))"]} ))
+			[ ${grid["$((x-1)),$((y-1))"]:-NilOrNotSet} != "NilOrNotSet" ] && (( calcNumber+=${grid["$((x-1)),$((y-1))"]} ))
+			[ ${grid["$((x-1)),$((y-0))"]:-NilOrNotSet} != "NilOrNotSet" ] && (( calcNumber+=${grid["$((x-1)),$((y+0))"]} ))
+			[ ${grid["$((x-1)),$((y+1))"]:-NilOrNotSet} != "NilOrNotSet" ] && (( calcNumber+=${grid["$((x-1)),$((y+1))"]} ))
+			grid["$x,$y"]=${calcNumber}
+			#echo "part2 - $calcNumber  - ($x,$y) ($maxX,$maxY) $direction"
+			if (( calcNumber > number )); then
+				echo "part2 number=${calcNumber}"
+				part2Done=1
+			fi
+		fi
+
+		(( marker ++ ))
+	done
+
+	echo "($x,$y)"
+	local -i xx; let xx=$(abs $x)
+	local -i yy; let yy=$(abs $y)
+	echo "path=$((xx+yy))"
+}
+
 function day1() {
     list=12131415
     list=123123
@@ -101,5 +278,9 @@ function day2() {
 eval -- day"${day}"
 
 # results
+# day04 part1 386
+# day04 part2 208
+# day03 part1 419
+# day03 part2 295229
 # day02 part1 44887
 # day02 part2 242
