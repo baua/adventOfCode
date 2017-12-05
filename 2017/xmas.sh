@@ -18,8 +18,45 @@ function abs(){
 	fi
 }
 
+function day5() {
+    local data;
+    local -a stack
+    stack=( 0 3 0 1 -3 )
+    local stackOrg; stackOrg=( $(xargs < "${inputDir}"/"${FUNCNAME[0]}".txt ) )
+    stack=( ${stackOrg[@]} )
+    local -i len=${#stack[@]}
+    local -i pointer=0
+    local -i offset
+    local -i steps=0
+
+    while (( pointer < len )); do
+        offset=${stack[${pointer}]}
+        stack[${pointer}]=$(( offset + 1 ))
+        (( pointer += offset ))
+        (( steps ++ ))
+    done
+    echo "part1=${steps}"
+
+    stack=( 0 3 0 1 -3 )
+    stack=( ${stackOrg[@]} )
+    pointer=0;
+    steps=0
+    while (( pointer < len )); do
+        let offset=${stack[${pointer}]}
+        if (( offset >=  3 )); then
+            stack[${pointer}]=$(( offset - 1 ))
+        else
+            stack[${pointer}]=$(( offset + 1 ))
+        fi
+        (( pointer += offset ))
+        (( steps ++ ))
+    done
+    echo "part2=${steps}"
+
+}
+
 function day4() {
-    local data; 
+    local data;
     data=$(cat <<!
 aa bb cc dd ee
 aa bb cc dd aa
@@ -27,7 +64,7 @@ aa bb cc dd aaa
 aa
 !
 )
-    data="$(cat ${inputDir}/day4.txt)"
+    data="$(cat "${inputDir}"/day4.txt)"
     local -a row
     local -A dummy=()
     local -A dummy2=()
@@ -278,6 +315,8 @@ function day2() {
 eval -- day"${day}"
 
 # results
+# day05 part1 373160
+# day05 part2 26395586
 # day04 part1 386
 # day04 part2 208
 # day03 part1 419
