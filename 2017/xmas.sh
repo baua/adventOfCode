@@ -46,14 +46,8 @@ c inc -20 if c == 10
         wahr=0
         [ "${regs[${reg}]:-NilOrNotSet}" == "NilOrNotSet" ] && regs[${reg}]=0
         [ "${regs[${first}]:-NilOrNotSet}" == "NilOrNotSet" ] && regs[${first}]=0
-        case "${cond}" in
-            ">") (( ${regs[${first}]} > second )) && wahr=1 ;;
-            "<") (( ${regs[${first}]} < second )) && wahr=1 ;;
-            ">=") (( ${regs[${first}]} >= second )) && wahr=1 ;;
-            "<=") (( ${regs[${first}]} <= second )) && wahr=1 ;;
-            "!=") (( ${regs[${first}]} != second )) && wahr=1 ;;
-            "==") (( ${regs[${first}]} == second )) && wahr=1 ;;
-        esac
+
+        eval "(( ${regs[${first}]} ${cond} ${second} ))" && wahr=1
         if (( wahr == 1 )); then
             case "${op}" in
                 inc) regs[${reg}]=$(( ${regs[${reg}]} + value )) ;;
@@ -533,7 +527,7 @@ eval -- day"${day}"
 
 # results
 # day08 part1 6611
-# day07 part2 
+# day07 part2 6619
 # day07 part1 cyrupz
 # day07 part2 cwwwj=201-8=193
 # day06 part1 3156
