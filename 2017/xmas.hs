@@ -2,11 +2,12 @@ import Control.Monad
 import System.Environment
 import Data.Char
 import Data.List
+import Data.Ord
 import Debug.Trace
 import System.FilePath
 
 inputDir = "/home/mlehmann/study/adventOfCode/2017/inputs/"
-days = [ day1Main, day2Main, day3Main, day4Main, day5Main ]
+days = [ day1Main, day2Main, day3Main, day4Main, day5Main, day6Main]
 
 rInt :: String -> Int
 rInt = read
@@ -15,6 +16,41 @@ noDuplicates [] = True
 noDuplicates xs
     | nub xs == xs  = True
     | otherwise     = False
+
+-- DAY6 Start -={
+day6Main = do
+    content <- readFile $ inputDir </> "day6.txt"
+    --let content="0 2 7 0"
+    let linesOfFile = map words $ lines content
+        (last,count) = day6part1 linesOfFile
+    print $  "part1=" ++ show count ++ ":" ++ show last
+    --print $  "part1=" ++ show (day6part1 linesOfFile)
+
+-- MJs function
+solution2 xs n =
+  let len = length xs
+  in zipWith (+) xs
+                 ( map sum . Data.List.transpose
+                           . map (take len . (++ repeat 0))
+                           . takeWhile (not . null)
+                           . iterate (snd . splitAt len)
+                           $ (replicate n 1) )
+
+redistributeMax :: [ Int ] -> [ Int ]
+redistributeMax xs = let (max,pos) = maximumBy (comparing fst ) (zip xs [0..])
+                         nl = take (length xs - 1) $ drop (pos+1) $ cycle xs
+                     in solution2 ([0]++nl) max
+
+runUntilRepeat :: [Int] -> [[Int]] -> Int -> ([Int],Int)
+runUntilRepeat current states counter
+    | counter == 1 = (current, counter )
+    | elem current states = ( current, counter )
+    | otherwise = runUntilRepeat (redistributeMax current) (states++[current]) (counter+1)
+
+day6part1 xs = runUntilRepeat (map rInt $ join xs) [] 0
+--day6part1 xs = map rInt $ join xs
+
+-- }=-
 
 -- DAY5 Start -={
 day5Main = do
@@ -37,8 +73,8 @@ day5 steps pos xs
 day5_2 :: Int -> Int -> [ Int ] -> ( Int, Int, [Int] )
 day5_2 steps pos xs
     | pos >= length xs  = ( steps, pos, [] )
-    | xs !! pos >= 3  &&  pos < length xs = trace (show steps ++":" ++ show pos) day5_2 (steps + 1) (pos + (xs !! pos)) (addToNthElement xs pos (fromIntegral (-1)))
-    | otherwise         = trace (show steps ++ ":" ++ show pos ) day5_2 (steps + 1) (pos + (xs !! pos)) (addToNthElement xs pos 1)
+    | xs !! pos >= 3  &&  pos < length xs = day5_2 (steps + 1) (pos + (xs !! pos)) (addToNthElement xs pos (fromIntegral (-1)))
+    | otherwise         = day5_2 (steps + 1) (pos + (xs !! pos)) (addToNthElement xs pos 1)
 
 day5part1 xs = day5 0 0 $ map rInt $ join xs
 day5part2 xs = day5_2 0 0 $ map rInt $ join xs
@@ -126,7 +162,7 @@ main = do
 
 -- results
 -- day05_01 373160
--- day05_02
+-- day05_02 26395586
 -- day04_01 386
 -- day04_02 208
 -- day03_01 373160

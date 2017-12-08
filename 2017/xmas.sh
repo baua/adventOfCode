@@ -18,6 +18,223 @@ function abs(){
 	fi
 }
 
+# Postition of the biggest value
+function biggestPos() {
+    local -a list; read -ra list <<<"$@"
+    local -i biggest=0
+    for i in $(seq 0 $((${#list[@]} - 1 ))); do
+        (( ${list[$i]} > ${list[${biggest}]} )) && let biggest=i
+    done
+    echo ${biggest}
+}
+
+function day8() {
+    local data;
+    data=$(cat <<!
+b inc 5 if a > 1
+a inc 1 if b < 5
+c dec -10 if a >= 1
+c inc -20 if c == 10
+!
+)
+    data="$(cat "${inputDir}"/day8.txt)"
+    local -A regs
+    local -i biggerest=0
+    local reg op value first cond
+    local -i wahr value second
+    while read -r reg op value _ first cond second; do
+        wahr=0
+        [ "${regs[${reg}]:-NilOrNotSet}" == "NilOrNotSet" ] && regs[${reg}]=0
+        [ "${regs[${first}]:-NilOrNotSet}" == "NilOrNotSet" ] && regs[${first}]=0
+        case "${cond}" in
+            ">") (( ${regs[${first}]} > second )) && wahr=1 ;;
+            "<") (( ${regs[${first}]} < second )) && wahr=1 ;;
+            ">=") (( ${regs[${first}]} >= second )) && wahr=1 ;;
+            "<=") (( ${regs[${first}]} <= second )) && wahr=1 ;;
+            "!=") (( ${regs[${first}]} != second )) && wahr=1 ;;
+            "==") (( ${regs[${first}]} == second )) && wahr=1 ;;
+        esac
+        if (( wahr == 1 )); then
+            case "${op}" in
+                inc) regs[${reg}]=$(( ${regs[${reg}]} + value )) ;;
+                dec) regs[${reg}]=$(( ${regs[${reg}]} - value )) ;;
+            esac
+        fi
+        (( ${regs[${reg}]} > biggerest )) && biggerest=${regs[${reg}]}
+    done <<<"${data}"
+    local -i biggest=0
+    for r in "${regs[@]}"; do
+        (( r > biggest )) && biggest=$r
+    done
+    echo "part1=${biggest}"
+    echo "part2=${biggerest}"
+
+}
+
+function day7() {
+    local data;
+    data=$(cat <<!
+pbga (66)
+xhth (57)
+ebii (61)
+havc (66)
+ktlj (57)
+fwft (72) -> ktlj, cntj, xhth
+qoyq (66)
+padx (45) -> pbga, havc, qoyq
+tknk (41) -> ugml, padx, fwft
+jptl (61)
+ugml (68) -> gyxo, ebii, jptl
+gyxo (61)
+cntj (57)
+!
+)
+    local -a holding
+    local value
+    data="$(cat "${inputDir}"/day7.txt)"
+    declare -A progs=()
+    while read -r name weight rest; do
+        weight=${weight//(/}
+        weight=${weight//)/}
+        progs["${name}"]="|${weight}|"
+        if [ ${#rest} -gt 0 ]; then
+            rest=${rest#-> }
+            rest=${rest//,/}
+            progs["${name}"]+="${rest}"
+        fi
+    done<<<"${data}"
+
+    for i in "${!progs[@]}"; do
+        value="${progs[$i]}"
+        read -ra holding <<<"${value##*|}"
+        for h in "${holding[@]}"; do
+            h=${h// /}
+            progs[$h]="$i${progs[$h]}"
+        done
+    done
+
+    for i in "${!progs[@]}"; do
+        value=${progs[$i]}
+        if [ "${value:0:1}" == "|" ]; then
+            echo "part1=$i"
+        fi
+    done
+    read
+
+    local -i sum=0
+    local -a leaves
+    local -i foundDiff=0
+    local -i nodeReady=1
+    local -A weights=()
+    local -A check=()
+    local -i diff=0
+    local foo
+
+    while (( foundDiff == 0 )); do
+        for i in "${!progs[@]}"; do
+            echo -n "trying $i ..."
+            nodeReady=1
+            check=()
+            let nodeReady=1
+            value="${progs[$i]}"
+            read -ra leaves<<<"${value##*|}"
+            value=${value%|*}
+            value=${value#*|}
+
+            # check if all leaves are resolved which means the weight is set
+            for leaf in "${leaves[@]}"; do
+                if [ "${weights[${leaf}]:-NilOrNotSet}" == "NilOrNotSet" ]; then
+                    let nodeReady=0
+                fi
+            done
+
+            # if so then loop again
+            if (( nodeReady == 1 )); then
+                echo -n " check leaves ..."
+                for leaf in "${leaves[@]}"; do
+                    check[${weights[${leaf}]}]+="|${leaf}"
+                    (( value += ${weights[${leaf}]} ))
+                done
+                if [ ${#check[@]} -gt 1 ]; then
+                    diff=0
+                    local -a checkleaves
+                    for item in "${!check[@]}"; do
+                        echo "progs ${check[${item}]} have ${item}"
+                        foo="${check[${item}]}"
+                        IFS='|' read -ra checkleaves <<<"${foo#|}"
+                        if (( diff == 0 )); then
+                            let diff=${item}
+                        else
+                            (( diff -= item ))
+                        fi
+                        if [ ${#checkleaves[@]} -eq 1 ]; then
+                            foo="${progs[${checkleaves[0]}]}"
+                            foo=${foo%|*}
+                            foo=${foo#*|}
+                        fi
+                        foundDiff=1
+                        break
+                    done
+                    #echo "diff=${diff}"
+                    #echo "$i=${progs[$i]}"
+                    #echo "cwwwj=${progs[cwwwj]}"
+                    #echo "cwwwj=${weights['cwwwj']}"
+                    #echo "slzaeep=${weights['slzaeep']}"
+                    #echo "hiotqxu=${weights['hiotqxu']}"
+                    #echo "qppggd=${weights['qppggd']}"
+                fi
+                weights[$i]=${value}
+                echo " finished."
+            else
+                echo "$i is not weighted yet"
+            fi
+
+            # debug
+            #for weight in "${!weights[@]}"; do
+            #    echo "$weight weighs ${weights[${weight}]}"
+            #done
+        done
+    done
+    echo -n "part2="
+    echo $((foo - diff))
+    echo
+}
+
+function day6() {
+    local data;
+    data="0 2 7 0"
+    data="$(cat "${inputDir}"/day6.txt)"
+    local -a banks; read -ra banks <<<"${data[@]}"
+    local -A states=()
+    local currentState=${data// /_}
+    local -i bigPos bigVal pos
+    local -i cycles
+
+    while [ "${states[${currentState}]:-NilOrNotSet}" == "NilOrNotSet" ]; do
+        bigPos=$(biggestPos "${banks[@]}")
+        let bigVal=${banks[${bigPos}]}
+        let -i numBanks=${#banks[@]}
+
+        states[${currentState}]=${cycles}
+
+        banks[${bigPos}]=0
+        (( pos=bigPos+1 ))
+
+        while (( bigVal > 0 )); do
+            if (( pos > numBanks - 1)); then pos=0; fi
+            banks[${pos}]=$(( ${banks[${pos}]}+1 ))
+            (( bigVal -- ))
+            (( pos++ ))
+        done
+        (( cycles ++ ))
+        dummy="${banks[*]}"
+        currentState=${dummy// /_}
+    done
+    echo "part1=${cycles}"
+    local loop; loop=$(( cycles - ${states[${currentState}]}))
+    echo "part2=${loop}"
+}
+
 function day5() {
     local data;
     local -a stack
@@ -315,6 +532,12 @@ function day2() {
 eval -- day"${day}"
 
 # results
+# day08 part1 6611
+# day07 part2 
+# day07 part1 cyrupz
+# day07 part2 cwwwj=201-8=193
+# day06 part1 3156
+# day06 part2 1610
 # day05 part1 373160
 # day05 part2 26395586
 # day04 part1 386

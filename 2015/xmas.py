@@ -199,7 +199,7 @@ def day8(infile,part):
     print(strCode)
     print(memCount)
     print(strCode-memCount)
-workdir="%s/tmp/adventOfCode/" % os.path.expanduser('~')
+workdir="%s/study/adventOfCode/2015/" % os.path.expanduser('~')
 day=int(sys.argv[1])
 if (len(sys.argv) > 2):
     part=sys.argv[2]
