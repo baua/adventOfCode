@@ -28,6 +28,47 @@ function biggestPos() {
     echo ${biggest}
 }
 
+function day9() {
+    local data;
+    data=$(cat <<!
+{{<a!>},{<a!>},{<a!>},{<ab>}}
+!
+)
+    data="$(cat "${inputDir}"/day9.txt)"
+
+    local -i groups=0
+    local -i garbageOn=0
+    local -i score=0
+    local -i ignoreNext=0
+    local -i garbageCount=0
+
+    while read -rn 1 char; do
+        if (( ignoreNext == 1 )); then
+            (( ignoreNext=0 ))
+        else
+            if (( garbageOn == 1 )); then
+                case "${char}" in
+                    "!") let ignoreNext=1 ;;
+                    ">") let garbageOn=0 ;;
+                    *) (( garbageCount++));;
+                esac
+            else
+                case "${char}" in
+                    "{") (( groups++ )) ;;
+                    "}")
+                        (( score += groups))
+                        (( groups--))
+                    ;;
+                    "<") let garbageOn=1 ;;
+                esac
+            fi
+        fi
+    done <<<"${data}"
+    echo "part1=${score}"
+    echo "part2=${garbageCount}"
+
+}
+
 function day8() {
     local data;
     data=$(cat <<!
@@ -526,8 +567,10 @@ function day2() {
 eval -- day"${day}"
 
 # results
+# day09 part1 12803
+# day09 part2 6425
 # day08 part1 6611
-# day07 part2 6619
+# day08 part2 6619
 # day07 part1 cyrupz
 # day07 part2 cwwwj=201-8=193
 # day06 part1 3156
