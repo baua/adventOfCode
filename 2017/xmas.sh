@@ -48,6 +48,55 @@ function dups() {
     fi
 }
 
+function gridDist() {
+    local -i x; x=$(abs "$1")
+    local -i y; y=$(abs "$2")
+    local -i dist=0
+
+    if ((y > x )); then
+        dist=x
+        (( y-=x ))
+        (( dist=dist+(y/2) ))
+    else
+        let dist=x
+    fi
+    echo ${dist}
+}
+
+function day11() {
+    local data;
+    local -a directions
+    data="ne,ne,ne"
+    data="ne,ne,sw,sw"
+    data="ne,ne,s,s"
+    data="se,sw,se,sw,sw"
+    data="$(cat "${inputDir}"/day11.txt)"
+    IFS=',' read -ra directions<<<"${data}"
+    local -i x y
+    let x=0
+    let y=0
+    local -i max=0
+    local -i dist=0
+
+    for dir in "${directions[@]}"; do
+        case "${dir}" in
+            n) (( y+=2 )) ;;
+            s) (( y-=2 )) ;;
+            ne) (( x++ )); (( y++ ));;
+            se) (( x++ )); (( y-- ));;
+            nw) (( x-- )); (( y++ ));;
+            sw) (( x-- )); (( y-- ));;
+            *) echo "problem"; exti;;
+        esac
+        dist=$(gridDist $x $y)
+        (( dist > max )) && max=dist
+    done
+
+    echo "x=$x y=$y"
+    echo -n "part1="
+    gridDist $x $y
+    echo "part2=$max"
+}
 
 function day10() {
     local data;
@@ -675,6 +724,8 @@ function day2() {
 eval -- day"${day}" "$@"
 
 # results
+# day11 part1 670
+# day11 part2 1426
 # day10 part1 9656
 # day10 part2 20b7b54c92bf73cf3e5631458a715149
 # day09 part1 12803
