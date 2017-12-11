@@ -2,11 +2,12 @@
 
 inputDir="${HOME}/study/adventOfCode/2017/inputs"
 
-if [ $# -ne 1 ]; then
+if [ $# -lt 1 ]; then
     echo "usage: $0 <number-of-day>"
     exit -1
 fi
 day=$1
+shift
 
 function abs(){
 	local -i number=$1
@@ -18,6 +19,10 @@ function abs(){
 	fi
 }
 
+function ord {
+    printf "%d" "'$1"
+}
+
 # Postition of the biggest value
 function biggestPos() {
     local -a list; read -ra list <<<"$@"
@@ -26,6 +31,109 @@ function biggestPos() {
         (( ${list[$i]} > ${list[${biggest}]} )) && let biggest=i
     done
     echo ${biggest}
+}
+
+function dups() {
+    local -a list=( $@ )
+    local len=${#list[@]}
+    local uniqElems; uniqElems=$(for i in "${list[@]}"; do echo "$i"; done| sort | uniq | wc -l)
+    if (( len != uniqElems )); then
+        echo "problem"
+        #for i in "${list[@]}"; do echo $i; done| sort | uniq -c
+        #echo "${list[@]}"
+        exit
+        return 1
+    else
+        return 0
+    fi
+}
+
+
+function day10() {
+    local data;
+    local -a list=();
+    list=( $(seq 0 $(( 255 ))) )
+    local -i listLength=${#list[@]}
+    local -a subList
+    local subListRev
+    local -i skipSize=0
+    local -i pos=0
+    local -i end
+    local -i rounds=1
+    local -i part
+    if [ $# -gt 0 ]; then
+        let part=$1
+    else
+        let part=1
+    fi
+    data=$(cat <<!
+3,0,4,1,5
+!
+)
+    data="$(cat "${inputDir}"/day10.txt)"
+    local -a lengths=()
+    local -i c
+    if (( part == 2 )); then
+        local char
+        if (( ${#data[@]} > 0 )); then
+            while read -r -n 1 char; do
+                let c=$(ord "${char}")
+                (( c != 0 )) && lengths+=( $c )
+            done<<<"${data}"
+        fi
+        lengths+=(17 31 73 47 23)
+        rounds=64
+    else
+        IFS=',' read -ra lengths<<<"${data}"
+    fi
+    if (( listLength>0 )); then
+        #shellcheck disable=SC2034
+        for round in $(seq 1 ${rounds}); do
+            #echo "round=${round} - p:$pos,s:$skipSize"
+            for length in "${lengths[@]}"; do
+                # find section
+                let end=$((pos+length))
+                if ((end >= listLength )); then
+                    subList=( ${list[@]:${pos}} )
+                    subList+=( ${list[@]:0:$((end - listLength ))} )
+                else
+                    subList=( ${list[@]:${pos}:${length}} )
+                fi
+                #echo "sublist(p:$pos,s:$skipSize,l:$length)=${subList[@]}"
+                subListRev=( $(echo "${subList[@]}"|tr ' ' '\n'|tac|tr '\n' ' ') )
+                for p in "${subListRev[@]}"; do
+                    list[${pos}]=$p
+                    ((pos++))
+                    (( pos == listLength )) && let pos=0
+                done
+                (( pos += skipSize ))
+                #(( pos >= listLength )) && (( pos=pos-listLength ))
+                (( pos %= listLength ))
+
+                (( skipSize ++ ))
+            done
+            dups "${list[@]}"
+        done
+    fi
+
+    if (( part == 2 )); then
+        local xorStr=
+        local -a denseHash=()
+        local -i hash
+        for a in $(seq 0 16 255); do
+            xorStr="${list[@]:$a:16}"
+            eval "let hash=${xorStr// /^}"
+            denseHash+=( ${hash} ) 
+        done
+        echo -n "part2="
+        for dh in "${denseHash[@]}"; do
+            printf "%02x" "${dh}"
+        done
+        echo
+    else
+        echo "part1=$(( ${list[0]} * ${list[1]} ))"
+    fi
+    #echo "part2=${}"
 }
 
 function day9() {
@@ -564,9 +672,11 @@ function day2() {
     echo "part2 checksum = ${checksum2}"
 }
 
-eval -- day"${day}"
+eval -- day"${day}" "$@"
 
 # results
+# day10 part1 9656
+# day10 part2 20b7b54c92bf73cf3e5631458a715149
 # day09 part1 12803
 # day09 part2 6425
 # day08 part1 6611
