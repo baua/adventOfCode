@@ -9,6 +9,7 @@ fi
 day=$1
 shift
 
+# Reusable funcs -={
 function abs(){
 	local -i number=$1
 	if (( number < 0 )); then
@@ -63,6 +64,64 @@ function gridDist() {
     echo ${dist}
 }
 
+# }=-
+
+function lists() {
+    local action=$1
+    shift
+    local list=$@
+
+    case "${action}" in
+        addUnique) noop ;;
+    esac
+}
+
+# day 12 -={
+function day12() {
+    local data;
+    data="$(cat "${inputDir}"/day12.txt)"
+    local -A input
+    local -A pipes
+    local -i pid
+    data=$(cat <<!
+0 <-> 2
+1 <-> 1
+2 <-> 0, 3, 4
+3 <-> 2, 4
+4 <-> 2, 3, 6
+5 <-> 6
+6 <-> 4, 5
+!
+)
+    while read -r pid _ rest; do
+        input[${pid}]="${rest//, / }"
+    done <<<"${data}"
+
+    for x in "${!input[@]}"; do
+        echo "$x -> ${input[$x]}"
+    done
+    echo
+
+    # resolve pipes
+    for i in "${!input[@]}"; do
+        pipes[$i]+=${input[$i]// /|}
+        for z in ${input[$i]}; do
+            #shellcheck disable=SC1073
+            pipes[$z]+="|$i"
+        done
+    done
+
+    for x in "${!pipes[@]}"; do
+        echo "$x -> ${pipes[$x]}"
+    done
+
+    echo "part1="
+    echo "part2="
+}
+
+# }=-
+
+# day 11 -={
 function day11() {
     local data;
     local -a directions
@@ -97,7 +156,9 @@ function day11() {
     gridDist $x $y
     echo "part2=$max"
 }
+# }=-
 
+# day 10 -={
 function day10() {
     local data;
     local -a list=();
@@ -184,7 +245,9 @@ function day10() {
     fi
     #echo "part2=${}"
 }
+# }=-
 
+# day 9 -={
 function day9() {
     local data;
     data=$(cat <<!
@@ -225,7 +288,9 @@ function day9() {
     echo "part2=${garbageCount}"
 
 }
+# }=-
 
+# day 8 -={
 function day8() {
     local data;
     data=$(cat <<!
@@ -262,7 +327,9 @@ c inc -20 if c == 10
     echo "part2=${biggerest}"
 
 }
+# }=-
 
+# day 7 -={
 function day7() {
     local data;
     data=$(cat <<!
@@ -391,7 +458,9 @@ cntj (57)
     echo $((foo - diff))
     echo
 }
+# }=-
 
+# day 6 -={
 function day6() {
     local data;
     data="0 2 7 0"
@@ -427,6 +496,9 @@ function day6() {
     echo "part2=${loop}"
 }
 
+# }=-
+
+# day 5 -={
 function day5() {
     local data;
     local -a stack
@@ -464,6 +536,9 @@ function day5() {
 
 }
 
+# }=-
+
+# day 4 -={
 function day4() {
     local data;
     data=$(cat <<!
@@ -520,6 +595,9 @@ aa
     echo "part2 valid passwords = $validPasswords2"
 }
 
+# }=-
+
+# day 3 -={
 function day3() {
 #shellcheck disable=SC2034
 	mem=$(cat <<!
@@ -631,6 +709,9 @@ function day3() {
 	echo "path=$((xx+yy))"
 }
 
+# }=-
+
+# day 1 -={
 function day1() {
     list=12131415
     list=123123
@@ -655,6 +736,9 @@ function day1() {
     echo "sum_part2=${sum2}"
 }
 
+# }=-
+
+# day 2 -={
 function day2() {
     local table
     table=$(cat <<!
@@ -721,9 +805,13 @@ function day2() {
     echo "part2 checksum = ${checksum2}"
 }
 
+# }=-
+
 eval -- day"${day}" "$@"
 
 # results
+# day12 part1
+# day12 part2
 # day11 part1 670
 # day11 part2 1426
 # day10 part1 9656
